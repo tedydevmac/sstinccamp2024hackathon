@@ -76,12 +76,18 @@ class TicTacToe extends Component {
         (this.state.xIsNext ? 'X' : 'O') +
         " to move opponent's piece";
     } else {
-      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
+      status = 'Current player: ' + (this.state.xIsNext ? 'X' : 'O');
     }
 
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Tic Tac Toe</Text>
+        <Text style={styles.news}>{status}</Text>
+        <View style={styles.turnBox}>
+          <Text style={[styles.status, {transform: [{rotate: '180deg'}]}]}>
+            {this.state.xIsNext ? 'Wait...' : 'Your turn'}
+          </Text>
+        </View>
         <View style={styles.board}>
           {this.renderSquare(0)}
           {this.renderSquare(1)}
@@ -93,7 +99,11 @@ class TicTacToe extends Component {
           {this.renderSquare(7)}
           {this.renderSquare(8)}
         </View>
-        <Text style={styles.status}>{status}</Text>
+        <View style={styles.turnBox}>
+          <Text style={styles.status}>
+            {this.state.xIsNext ? 'Your turn' : 'Wait...'}
+          </Text>
+        </View>
         <Button
           title="Restart Game"
           onPress={() => this.restartGame()}
@@ -114,30 +124,56 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: 'bold',
+    marginBottom: 20,
   },
   board: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     width: 300,
     height: 300,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: '#333',
+    borderRadius: 10,
+    padding: 5,
+    marginVertical: 15,
   },
   square: {
-    width: 100,
-    height: 100,
+    width: '30%',
+    height: '30%',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#000',
+    backgroundColor: '#fff',
+    margin: '1.5%',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
   },
   squareText: {
-    fontSize: 24,
+    fontSize: 45,
+    fontWeight: 'bold',
+    color: '#333',
   },
   status: {
     marginVertical: 20,
+    fontSize: 30,
+    fontWeight: '600',
+    marginLeft: 20,
+  },
+  news: {
+    marginVertical: 20,
     fontSize: 20,
+    fontWeight: '600',
+  },
+  turnBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '90%',
+    backgroundColor: '#FF5733',
   },
   restartButton: {
-    marginTop: 10,
+    marginTop: 20,
   },
 });
 
@@ -166,9 +202,6 @@ function calculateWinner(squares) {
 export default function App() {
   return (
     <PaperProvider>
-      <Appbar.Header>
-        <Appbar.Content title="Tic Tac Toe" />
-      </Appbar.Header>
       <TicTacToe />
     </PaperProvider>
   );
