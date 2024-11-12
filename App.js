@@ -8,71 +8,87 @@ class TicTacToe extends Component {
     this.state = {
       squares: Array(9).fill(null),
       xIsNext: true,
+      xTurns: 0,
+      oTurns: 0,
+      movePhase: false,
     };
   }
 
-  // Function to handle clicks on the squares
   handleClick(i) {
     const squares = this.state.squares.slice();
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
-    squares[i] = this.state.xIsNext ? 'X' : 'O';
+
+    if (this.state.movePhase) {
+      // Logic for moving pieces
+      if (this.state.xIsNext && squares[i] === 'O') {
+        squares[i] = 'X';
+      } else if (!this.state.xIsNext && squares[i] === 'X') {
+        squares[i] = 'O';
+      } else {
+        return;
+      }
+    } else {
+      squares[i] = this.state.xIsNext ? 'X' : 'O';
+      if (this.state.xIsNext) {
+        this.setState({xTurns: this.state.xTurns + 1});
+      } else {
+        this.setState({oTurns: this.state.oTurns + 1});
+      }
+    }
+
     this.setState({
       squares: squares,
       xIsNext: !this.state.xIsNext,
+      movePhase: this.state.xTurns >= 3 && this.state.oTurns >= 3,
     });
   }
 
-  // Function to restart the game
   restartGame() {
     this.setState({
-      // Set default values to reset the game
       squares: Array(9).fill(null),
       xIsNext: true,
+      xTurns: 0,
+      oTurns: 0,
+      movePhase: false,
     });
   }
 
-  // Function to render the squares while playing
   renderSquare(i) {
     return (
-      // render individual squares
       <TouchableOpacity
-        style={styles.square}
-        onPress={() => this.handleClick(i)}>
+        onPress={() => this.handleClick(i)}
+        style={styles.square}>
         <Text style={styles.squareText}>{this.state.squares[i]}</Text>
       </TouchableOpacity>
     );
   }
 
-  // Function to render everything inside the component
   render() {
     const winner = calculateWinner(this.state.squares);
     let status;
-    // if someone won the game, change the status to winner
-    // if all the squares are filled and no one has won, display as draw!
     if (winner) {
-      status = `Winner: ${winner}`;
-    } else if (this.state.squares.every(square => square !== null)) {
-      status = 'Draw!';
+      status = 'Winner: ' + winner;
+    } else if (this.state.movePhase) {
+      status =
+        'Move Phase: ' +
+        (this.state.xIsNext ? 'X' : 'O') +
+        " to move opponent's piece";
     } else {
-      status = `Next player: ${this.state.xIsNext ? 'X' : 'O'}`;
+      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
     }
-    // return entire game screen
+
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Tic Tac Toe</Text>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
+        <View style={styles.board}>
           {this.renderSquare(0)}
           {this.renderSquare(1)}
           {this.renderSquare(2)}
-        </View>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
           {this.renderSquare(3)}
           {this.renderSquare(4)}
           {this.renderSquare(5)}
-        </View>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
           {this.renderSquare(6)}
           {this.renderSquare(7)}
           {this.renderSquare(8)}
@@ -88,28 +104,33 @@ class TicTacToe extends Component {
   }
 }
 
-// Stylings
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFE0',
+    backgroundColor: '#F5FCFF',
   },
   title: {
-    fontSize: 24,
-    marginBottom: 20,
+    fontSize: 30,
+    fontWeight: 'bold',
+  },
+  board: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: 300,
+    height: 300,
   },
   square: {
     width: 100,
     height: 100,
-    borderWidth: 1,
-    borderColor: 'black',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#000',
   },
   squareText: {
-    fontSize: 40,
+    fontSize: 24,
   },
   status: {
     marginVertical: 20,
