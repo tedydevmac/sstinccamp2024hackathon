@@ -1,7 +1,11 @@
-import React, {Component} from 'react';
+import React, {Component, useState} from 'react';
 import {View, Text, TouchableOpacity, Button, StyleSheet} from 'react-native';
 import {Provider as PaperProvider, Appbar} from 'react-native-paper';
-
+import Timer from './Timer';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import Homepage from './Homepage';
+const Stack = createNativeStackNavigator();
 class TicTacToe extends Component {
   constructor(props) {
     super(props);
@@ -10,39 +14,46 @@ class TicTacToe extends Component {
       xIsNext: true,
       xTurns: 0,
       oTurns: 0,
-      movePhase: false,
+      moveCount: 0,
+      playerCount: 4,
+      currentPlayer: 1,
     };
   }
 
   handleClick(i) {
-    const squares = this.state.squares.slice();
+    let squares = this.state.squares;
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
 
-    if (this.state.movePhase) {
-      // Logic for moving pieces
-      if (this.state.xIsNext && squares[i] === 'O') {
-        squares[i] = 'X';
-      } else if (!this.state.xIsNext && squares[i] === 'X') {
-        squares[i] = 'O';
-      } else {
-        return;
-      }
-    } else {
-      squares[i] = this.state.xIsNext ? 'X' : 'O';
-      if (this.state.xIsNext) {
-        this.setState({xTurns: this.state.xTurns + 1});
-      } else {
-        this.setState({oTurns: this.state.oTurns + 1});
-      }
+    squares[i] = this.state.xIsNext ? 'X' : 'O';
+    this.setState(prevState => ({
+      squares: squares,
+      xIsNext: !prevState.xIsNext,
+      moveCount: prevState.moveCount + 1,
+      xTurns: prevState.xIsNext ? prevState.xTurns + 1 : prevState.xTurns,
+      oTurns: !prevState.xIsNext ? prevState.oTurns + 1 : prevState.oTurns,
+    }));
+  }
+
+  handleMoveOpponentSquare(i) {
+    let squares = this.state.squares;
+    if (
+      calculateWinner(squares) ||
+      (this.state.xIsNext && squares[i] === 'X') ||
+      (!this.state.xIsNext && squares[i] === 'O')
+    ) {
+      return;
     }
 
-    this.setState({
+    squares[i] = this.state.xIsNext ? 'X' : 'O';
+    this.setState(prevState => ({
       squares: squares,
-      xIsNext: !this.state.xIsNext,
-      movePhase: this.state.xTurns >= 3 && this.state.oTurns >= 3,
-    });
+      xIsNext: !prevState.xIsNext,
+      moveCount: prevState.moveCount + 1,
+      xTurns: prevState.xIsNext ? prevState.xTurns + 1 : prevState.xTurns,
+      oTurns: !prevState.xIsNext ? prevState.oTurns + 1 : prevState.oTurns,
+    }));
   }
 
   restartGame() {
@@ -51,15 +62,28 @@ class TicTacToe extends Component {
       xIsNext: true,
       xTurns: 0,
       oTurns: 0,
-      movePhase: false,
+      moveCount: 0,
     });
+  }
+  move(i) {
+    if (this.state.moveCount >= 3) {
+      this.handleMoveOpponentSquare(i);
+    } else {
+      this.handleClick(i);
+    }
+    currentPlayer = this.state.currentPlayer;
+    currentPlayer += 1;
+    if (currentPlayer === this.state.playerCount) {
+      currentPlayer = 1;
+    }
+    this.setState(prevState => ({
+      currentPlayer: currentPlayer,
+    }));
   }
 
   renderSquare(i) {
     return (
-      <TouchableOpacity
-        onPress={() => this.handleClick(i)}
-        style={styles.square}>
+      <TouchableOpacity onPress={() => this.move(i)} style={styles.square}>
         <Text style={styles.squareText}>{this.state.squares[i]}</Text>
       </TouchableOpacity>
     );
@@ -70,46 +94,55 @@ class TicTacToe extends Component {
     let status;
     if (winner) {
       status = 'Winner: ' + winner;
-    } else if (this.state.movePhase) {
-      status =
-        'Move Phase: ' +
-        (this.state.xIsNext ? 'X' : 'O') +
-        " to move opponent's piece";
     } else {
-      status = 'Current player: ' + (this.state.xIsNext ? 'X' : 'O');
+      if (this.state.moveCount >= 3) {
+        status = 'Move phase: ' + (this.state.xIsNext ? 'X' : 'O');
+      } else {
+        status = 'Turn: ' + (this.state.xIsNext ? 'X' : 'O');
+      }
     }
 
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Tic Tac Toe</Text>
-        <Text style={styles.news}>{status}</Text>
-        <View style={styles.turnBox}>
-          <Text style={[styles.status, {transform: [{rotate: '180deg'}]}]}>
-            {this.state.xIsNext ? 'Wait...' : 'Your turn'}
-          </Text>
+      <PaperProvider>
+        <View style={styles.container}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              width: '100%',
+              height: '6%',
+              marginBottom: 10,
+            }}>
+            <Text style={styles.title}>Player {this.state.currentPlayer}</Text>
+            <Timer />
+          </View>
+          <Text style={styles.news}>{status}</Text>
+          <View style={styles.turnBox}>
+            <Text style={[styles.status, {transform: [{rotate: '180deg'}]}]}>
+              {this.state.xIsNext ? 'Wait...' : 'Your turn'}
+            </Text>
+            <Text style={styles.count}>({this.state.oTurns})</Text>
+          </View>
+          <View style={styles.board}>
+            {this.renderSquare(0)}
+            {this.renderSquare(1)}
+            {this.renderSquare(2)}
+            {this.renderSquare(3)}
+            {this.renderSquare(4)}
+            {this.renderSquare(5)}
+            {this.renderSquare(6)}
+            {this.renderSquare(7)}
+            {this.renderSquare(8)}
+          </View>
+          <View style={[styles.turnBox, [{marginBottom: 30}]]}>
+            <Text style={styles.status}>
+              {this.state.xIsNext ? 'Your turn' : 'Wait...'}
+            </Text>
+            <Text style={styles.count}>({this.state.xTurns})</Text>
+          </View>
+          <Button title="Restart Game" onPress={() => this.restartGame()} />
         </View>
-        <View style={styles.board}>
-          {this.renderSquare(0)}
-          {this.renderSquare(1)}
-          {this.renderSquare(2)}
-          {this.renderSquare(3)}
-          {this.renderSquare(4)}
-          {this.renderSquare(5)}
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
-        </View>
-        <View style={styles.turnBox}>
-          <Text style={styles.status}>
-            {this.state.xIsNext ? 'Your turn' : 'Wait...'}
-          </Text>
-        </View>
-        <Button
-          title="Restart Game"
-          onPress={() => this.restartGame()}
-          style={styles.restartButton}
-        />
-      </View>
+      </PaperProvider>
     );
   }
 }
@@ -125,13 +158,14 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 20,
+    marginRight: 50,
   },
   board: {
     width: 300,
     height: 300,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    backgroundColor: '#333',
+    backgroundColor: '#FF5733',
     borderRadius: 10,
     padding: 5,
     marginVertical: 15,
@@ -163,7 +197,7 @@ const styles = StyleSheet.create({
   },
   news: {
     marginVertical: 20,
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: '600',
   },
   turnBox: {
@@ -172,14 +206,17 @@ const styles = StyleSheet.create({
     width: '90%',
     backgroundColor: '#FF5733',
   },
-  restartButton: {
-    marginTop: 20,
+  count: {
+    marginVertical: 20,
+    fontSize: 30,
+    fontWeight: '600',
+    marginRight: 20,
   },
 });
 
 // Function to determine the winner
 function calculateWinner(squares) {
-  const lines = [
+  let lines = [
     [0, 1, 2],
     [3, 4, 5],
     [6, 7, 8],
@@ -201,8 +238,11 @@ function calculateWinner(squares) {
 // Return the entire component
 export default function App() {
   return (
-    <PaperProvider>
-      <TicTacToe />
-    </PaperProvider>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={Homepage} />
+        <Stack.Screen name="Main" component={TicTacToe} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
